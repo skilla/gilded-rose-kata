@@ -1,8 +1,9 @@
 <?php
 
 namespace GildedRose\Tests;
+use PHPUnit\Framework\TestCase;
 
-class GildedRoseTest extends \PHPUnit_Framework_TestCase
+class GildedRoseTest extends TestCase
 {
 }
 
