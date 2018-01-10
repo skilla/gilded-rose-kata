@@ -2,6 +2,8 @@
 
 namespace GildedRose;
 
+use GildedRose\Objects\ItemInterface;
+
 /**
  * Hi and welcome to team Gilded Rose.
  *
@@ -49,47 +51,22 @@ class Program
 {
     private $items = array();
 
-    const AGED_BRIE = "Aged Brie";
-
-    const BACKSTAGE = "Backstage passes to a TAFKAL80ETC concert";
-
-    const SULFURAS = "Sulfuras, Hand of Ragnaros";
-
-    const DEXTERITY = "+5 Dexterity Vest";
-
-    const ELIXIR = "Elixir of the Mongoose";
-
-    const CAKE = "Conjured Mana Cake";
-
-    const QUALITY_STEP = 1;
-
-    const MINIMUM_QUALITY = 0;
-
-    const MAXIMUM_QUALITY = 50;
-
-    const BACKSTAGE_MINIMUM_DAYS = 11;
-
-    const BACKSTAGE_DOUBLE_DAYS = 6;
-
-    const MINIMUM_SELLIN = 0;
-
-    const SELLIN_STEP = 1;
 
     public static function Main()
     {
         echo "HELLO\n";
 
         $app = new Program(array(
-              new Item(array( 'name' => self::DEXTERITY,'sellIn' => 10,'quality' => 20)),
-              new Item(array( 'name' => self::AGED_BRIE,'sellIn' => 2,'quality' => 0)),
-              new Item(array( 'name' => self::ELIXIR,'sellIn' => 5,'quality' => 7)),
-              new Item(array( 'name' => self::SULFURAS,'sellIn' => 0,'quality' => 80)),
+              new Item(array( 'name' => ItemInterface::DEXTERITY,'sellIn' => 10,'quality' => 20)),
+              new Item(array( 'name' => ItemInterface::AGED_BRIE,'sellIn' => 2,'quality' => 0)),
+              new Item(array( 'name' => ItemInterface::ELIXIR,'sellIn' => 5,'quality' => 7)),
+              new Item(array( 'name' => ItemInterface::SULFURAS,'sellIn' => 0,'quality' => 80)),
               new Item(array(
-                     'name' => self::BACKSTAGE,
+                     'name' => ItemInterface::BACKSTAGE,
                      'sellIn' => 15,
                      'quality' => 20
               )),
-              new Item(array('name' => self::CAKE,'sellIn' => 3,'quality' => 6)),
+              new Item(array('name' => ItemInterface::CAKE,'sellIn' => 3,'quality' => 6)),
         ));
 
         $app->UpdateQuality();
@@ -125,10 +102,11 @@ class Program
         $numberOfItems = count($this->items);
 
         for ($i = 0; $i < $numberOfItems; $i++) {
+            if ($this->isSulfuras($i)) {
+                continue;
+            }
             if (!$this->isAgedBrie($i) && !$this->isBackstage($i)) {
-                if (!$this->isSulfuras($i)) {
-                    $this->decreaseQualityWhenNotHasMinimumQuality($i);
-                }
+                $this->decreaseQualityWhenNotHasMinimumQuality($i);
             } else {
                 if (!$this->hasMaximumQuality($i)) {
                     $this->increaseQualityWhenNotHasMaximumQuality($i);
@@ -145,16 +123,12 @@ class Program
                 }
             }
 
-            if (!$this->isSulfuras($i)) {
-                $this->decreaseSellin($i);
-            }
+            $this->decreaseSellin($i);
 
-            if (!$this->hasMinimumSellin($i)) {
+            if ($this->isSellInHasPassed($i)) {
                 if (!$this->isAgedBrie($i)) {
                     if (!$this->isBackstage($i)) {
-                        if (!$this->isSulfuras($i)) {
-                            $this->decreaseQualityWhenNotHasMinimumQuality($i);
-                        }
+                        $this->decreaseQualityWhenNotHasMinimumQuality($i);
                     } else {
                         $this->setMinimumQuality($i);
                     }
@@ -171,7 +145,7 @@ class Program
      */
     protected function hasQuality($i): bool
     {
-        return $this->items[$i]->quality > self::MINIMUM_QUALITY;
+        return $this->items[$i]->quality > ItemInterface::MINIMUM_QUALITY;
     }
 
     /**
@@ -180,7 +154,7 @@ class Program
      */
     protected function hasMaximumQuality($i): bool
     {
-        return $this->items[$i]->quality >= self::MAXIMUM_QUALITY;
+        return $this->items[$i]->quality >= ItemInterface::MAXIMUM_QUALITY;
     }
 
     /**
@@ -189,7 +163,7 @@ class Program
      */
     protected function isAgedBrie($i): bool
     {
-        return $this->items[$i]->name == self::AGED_BRIE;
+        return $this->items[$i]->name == ItemInterface::AGED_BRIE;
     }
 
     /**
@@ -198,7 +172,7 @@ class Program
      */
     protected function isBackstage($i): bool
     {
-        return $this->items[$i]->name == self::BACKSTAGE;
+        return $this->items[$i]->name == ItemInterface::BACKSTAGE;
     }
 
     /**
@@ -207,7 +181,7 @@ class Program
      */
     protected function isSulfuras($i): bool
     {
-        return $this->items[$i]->name == self::SULFURAS;
+        return $this->items[$i]->name == ItemInterface::SULFURAS;
     }
 
     /**
@@ -216,7 +190,7 @@ class Program
      */
     protected function decreaseQuality($i): void
     {
-        $this->items[$i]->quality = $this->items[$i]->quality - self::QUALITY_STEP;
+        $this->items[$i]->quality = $this->items[$i]->quality - ItemInterface::QUALITY_STEP;
     }
 
     /**
@@ -225,7 +199,7 @@ class Program
      */
     protected function isMinimumDays($i): bool
     {
-        return $this->items[$i]->sellIn < self::BACKSTAGE_MINIMUM_DAYS;
+        return $this->items[$i]->sellIn < ItemInterface::BACKSTAGE_MINIMUM_DAYS;
     }
 
     /**
@@ -234,7 +208,7 @@ class Program
      */
     protected function isDoubleDays($i): bool
     {
-        return $this->items[$i]->sellIn < self::BACKSTAGE_DOUBLE_DAYS;
+        return $this->items[$i]->sellIn < ItemInterface::BACKSTAGE_DOUBLE_DAYS;
     }
 
     /**
@@ -242,7 +216,7 @@ class Program
      */
     protected function decreaseSellin($i): void
     {
-        $this->items[$i]->sellIn = $this->items[$i]->sellIn - self::SELLIN_STEP;
+        $this->items[$i]->sellIn = $this->items[$i]->sellIn - ItemInterface::SELLIN_STEP;
     }
 
     /**
@@ -250,16 +224,16 @@ class Program
      */
     protected function setMinimumQuality($i): void
     {
-        $this->items[$i]->quality = self::MINIMUM_QUALITY;
+        $this->items[$i]->quality = ItemInterface::MINIMUM_QUALITY;
     }
 
     /**
      * @param $i
      * @return bool
      */
-    protected function hasMinimumSellin($i): bool
+    protected function isSellInHasPassed($i): bool
     {
-        return $this->items[$i]->sellIn >= self::MINIMUM_SELLIN;
+        return $this->items[$i]->sellIn < ItemInterface::MINIMUM_SELLIN;
     }
 
     /**
@@ -268,7 +242,7 @@ class Program
     protected function increaseQualityWhenNotHasMaximumQuality($i): void
     {
         if (!$this->hasMaximumQuality($i)) {
-            $this->items[$i]->quality = $this->items[$i]->quality + self::QUALITY_STEP;
+            $this->items[$i]->quality = $this->items[$i]->quality + ItemInterface::QUALITY_STEP;
         }
     }
 
