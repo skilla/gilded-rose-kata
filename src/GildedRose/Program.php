@@ -49,21 +49,47 @@ class Program
 {
     private $items = array();
 
+    const AGED_BRIE = "Aged Brie";
+
+    const BACKSTAGE = "Backstage passes to a TAFKAL80ETC concert";
+
+    const SULFURAS = "Sulfuras, Hand of Ragnaros";
+
+    const DEXTERITY = "+5 Dexterity Vest";
+
+    const ELIXIR = "Elixir of the Mongoose";
+
+    const CAKE = "Conjured Mana Cake";
+
+    const QUALITY_STEP = 1;
+
+    const MINIMUM_QUALITY = 0;
+
+    const MAXIMUM_QUALITY = 50;
+
+    const BACKSTAGE_MINIMUM_DAYS = 11;
+
+    const BACKSTAGE_DOUBLE_DAYS = 6;
+
+    const MINIMUM_SELLIN = 0;
+
+    const SELLIN_STEP = 1;
+
     public static function Main()
     {
         echo "HELLO\n";
 
         $app = new Program(array(
-              new Item(array( 'name' => "+5 Dexterity Vest",'sellIn' => 10,'quality' => 20)),
-              new Item(array( 'name' => "Aged Brie",'sellIn' => 2,'quality' => 0)),
-              new Item(array( 'name' => "Elixir of the Mongoose",'sellIn' => 5,'quality' => 7)),
-              new Item(array( 'name' => "Sulfuras, Hand of Ragnaros",'sellIn' => 0,'quality' => 80)),
+              new Item(array( 'name' => self::DEXTERITY,'sellIn' => 10,'quality' => 20)),
+              new Item(array( 'name' => self::AGED_BRIE,'sellIn' => 2,'quality' => 0)),
+              new Item(array( 'name' => self::ELIXIR,'sellIn' => 5,'quality' => 7)),
+              new Item(array( 'name' => self::SULFURAS,'sellIn' => 0,'quality' => 80)),
               new Item(array(
-                     'name' => "Backstage passes to a TAFKAL80ETC concert",
+                     'name' => self::BACKSTAGE,
                      'sellIn' => 15,
                      'quality' => 20
               )),
-              new Item(array('name' => "Conjured Mana Cake",'sellIn' => 3,'quality' => 6)),
+              new Item(array('name' => self::CAKE,'sellIn' => 3,'quality' => 6)),
         ));
 
         $app->UpdateQuality();
@@ -79,56 +105,180 @@ class Program
         $this->items = $items;
     }
 
+    public function getQuality($index)
+    {
+        return $this->items[$index]->quality;
+    }
+
+    public function getSellin($index)
+    {
+        return $this->items[$index]->sellin;
+    }
+
+    public function getName($index)
+    {
+        return $this->items[$index]->name;
+    }
+
     public function UpdateQuality()
     {
-        for ($i = 0; $i < count($this->items); $i++) {
-            if ($this->items[$i]->name != "Aged Brie" && $this->items[$i]->name != "Backstage passes to a TAFKAL80ETC concert") {
-                if ($this->items[$i]->quality > 0) {
-                    if ($this->items[$i]->name != "Sulfuras, Hand of Ragnaros") {
-                        $this->items[$i]->quality = $this->items[$i]->quality - 1;
-                    }
+        $numberOfItems = count($this->items);
+
+        for ($i = 0; $i < $numberOfItems; $i++) {
+            if (!$this->isAgedBrie($i) && !$this->isBackstage($i)) {
+                if (!$this->isSulfuras($i)) {
+                    $this->decreaseQualityWhenNotHasMinimumQuality($i);
                 }
             } else {
-                if ($this->items[$i]->quality < 50) {
-                    $this->items[$i]->quality = $this->items[$i]->quality + 1;
+                if (!$this->hasMaximumQuality($i)) {
+                    $this->increaseQualityWhenNotHasMaximumQuality($i);
 
-                    if ($this->items[$i]->name == "Backstage passes to a TAFKAL80ETC concert") {
-                        if ($this->items[$i]->sellIn < 11) {
-                            if ($this->items[$i]->quality < 50) {
-                                $this->items[$i]->quality = $this->items[$i]->quality + 1;
-                            }
+                    if ($this->isBackstage($i)) {
+                        if ($this->isMinimumDays($i)) {
+                            $this->increaseQualityWhenNotHasMaximumQuality($i);
                         }
 
-                        if ($this->items[$i]->sellIn < 6) {
-                            if ($this->items[$i]->quality < 50) {
-                                $this->items[$i]->quality = $this->items[$i]->quality + 1;
-                            }
+                        if ($this->isDoubleDays($i)) {
+                            $this->increaseQualityWhenNotHasMaximumQuality($i);
                         }
                     }
                 }
             }
 
-            if ($this->items[$i]->name != "Sulfuras, Hand of Ragnaros") {
-                $this->items[$i]->sellIn = $this->items[$i]->sellIn - 1;
+            if (!$this->isSulfuras($i)) {
+                $this->decreaseSellin($i);
             }
 
-            if ($this->items[$i]->sellIn < 0) {
-                if ($this->items[$i]->name != "Aged Brie") {
-                    if ($this->items[$i]->name != "Backstage passes to a TAFKAL80ETC concert") {
-                        if ($this->items[$i]->quality > 0) {
-                            if ($this->items[$i]->name != "Sulfuras, Hand of Ragnaros") {
-                                $this->items[$i]->quality = $this->items[$i]->quality - 1;
-                            }
+            if (!$this->hasMinimumSellin($i)) {
+                if (!$this->isAgedBrie($i)) {
+                    if (!$this->isBackstage($i)) {
+                        if (!$this->isSulfuras($i)) {
+                            $this->decreaseQualityWhenNotHasMinimumQuality($i);
                         }
                     } else {
-                        $this->items[$i]->quality = $this->items[$i]->quality - $this->items[$i]->quality;
+                        $this->setMinimumQuality($i);
                     }
                 } else {
-                    if ($this->items[$i]->quality < 50) {
-                        $this->items[$i]->quality = $this->items[$i]->quality + 1;
-                    }
+                    $this->increaseQualityWhenNotHasMaximumQuality($i);
                 }
             }
+        }
+    }
+
+    /**
+     * @param $i
+     * @return bool
+     */
+    protected function hasQuality($i): bool
+    {
+        return $this->items[$i]->quality > self::MINIMUM_QUALITY;
+    }
+
+    /**
+     * @param $i
+     * @return bool
+     */
+    protected function hasMaximumQuality($i): bool
+    {
+        return $this->items[$i]->quality >= self::MAXIMUM_QUALITY;
+    }
+
+    /**
+     * @param $i
+     * @return bool
+     */
+    protected function isAgedBrie($i): bool
+    {
+        return $this->items[$i]->name == self::AGED_BRIE;
+    }
+
+    /**
+     * @param $i
+     * @return bool
+     */
+    protected function isBackstage($i): bool
+    {
+        return $this->items[$i]->name == self::BACKSTAGE;
+    }
+
+    /**
+     * @param $i
+     * @return bool
+     */
+    protected function isSulfuras($i): bool
+    {
+        return $this->items[$i]->name == self::SULFURAS;
+    }
+
+    /**
+     * @param $i
+     * @return int
+     */
+    protected function decreaseQuality($i): void
+    {
+        $this->items[$i]->quality = $this->items[$i]->quality - self::QUALITY_STEP;
+    }
+
+    /**
+     * @param $i
+     * @return bool
+     */
+    protected function isMinimumDays($i): bool
+    {
+        return $this->items[$i]->sellIn < self::BACKSTAGE_MINIMUM_DAYS;
+    }
+
+    /**
+     * @param $i
+     * @return bool
+     */
+    protected function isDoubleDays($i): bool
+    {
+        return $this->items[$i]->sellIn < self::BACKSTAGE_DOUBLE_DAYS;
+    }
+
+    /**
+     * @param $i
+     */
+    protected function decreaseSellin($i): void
+    {
+        $this->items[$i]->sellIn = $this->items[$i]->sellIn - self::SELLIN_STEP;
+    }
+
+    /**
+     * @param $i
+     */
+    protected function setMinimumQuality($i): void
+    {
+        $this->items[$i]->quality = self::MINIMUM_QUALITY;
+    }
+
+    /**
+     * @param $i
+     * @return bool
+     */
+    protected function hasMinimumSellin($i): bool
+    {
+        return $this->items[$i]->sellIn >= self::MINIMUM_SELLIN;
+    }
+
+    /**
+     * @param $i
+     */
+    protected function increaseQualityWhenNotHasMaximumQuality($i): void
+    {
+        if (!$this->hasMaximumQuality($i)) {
+            $this->items[$i]->quality = $this->items[$i]->quality + self::QUALITY_STEP;
+        }
+    }
+
+    /**
+     * @param $i
+     */
+    protected function decreaseQualityWhenNotHasMinimumQuality($i): void
+    {
+        if ($this->hasQuality($i)) {
+            $this->decreaseQuality($i);
         }
     }
 }
