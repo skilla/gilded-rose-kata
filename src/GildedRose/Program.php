@@ -2,7 +2,8 @@
 
 namespace GildedRose;
 
-use GildedRose\Objects\ItemInterface;
+use GildedRose\Products\ProductRepositoryInterface;
+use GildedRose\Repositories\ProductRepository;
 
 /**
  * Hi and welcome to team Gilded Rose.
@@ -49,210 +50,31 @@ use GildedRose\Objects\ItemInterface;
  */
 class Program
 {
-    private $items = array();
+    private $stock = array();
 
+    public function __construct(ProductRepositoryInterface $repository)
+    {
+        $this->stock = $repository->all();
+    }
 
-    public static function Main()
+    public static function main()
     {
         echo "HELLO\n";
 
-        $app = new Program(array(
-              new Item(array( 'name' => ItemInterface::DEXTERITY,'sellIn' => 10,'quality' => 20)),
-              new Item(array( 'name' => ItemInterface::AGED_BRIE,'sellIn' => 2,'quality' => 0)),
-              new Item(array( 'name' => ItemInterface::ELIXIR,'sellIn' => 5,'quality' => 7)),
-              new Item(array( 'name' => ItemInterface::SULFURAS,'sellIn' => 0,'quality' => 80)),
-              new Item(array(
-                     'name' => ItemInterface::BACKSTAGE,
-                     'sellIn' => 15,
-                     'quality' => 20
-              )),
-              new Item(array('name' => ItemInterface::CAKE,'sellIn' => 3,'quality' => 6)),
-        ));
+        $app = new Program(new ProductRepository());
 
-        $app->UpdateQuality();
+        $app->updateProducts();
 
         echo sprintf("%50s - %7s - %7s\n", "Name", "SellIn", "Quality");
-        foreach ($app->items as $item) {
-            echo sprintf("%50s - %7d - %7d\n", $item->name, $item->sellIn, $item->quality);
+        foreach ($app->stock as $item) {
+            echo sprintf("%50s - %7d - %7d\n", $item->name(), $item->sellIn(), $item->quality());
         }
     }
 
-    public function __construct(array $items)
+    public function updateProducts()
     {
-        $this->items = $items;
-    }
-
-    public function getQuality($index)
-    {
-        return $this->items[$index]->quality;
-    }
-
-    public function getSellin($index)
-    {
-        return $this->items[$index]->sellin;
-    }
-
-    public function getName($index)
-    {
-        return $this->items[$index]->name;
-    }
-
-    public function UpdateQuality()
-    {
-        $numberOfItems = count($this->items);
-
-        for ($i = 0; $i < $numberOfItems; $i++) {
-            if ($this->isSulfuras($i)) {
-                continue;
-            }
-            if (!$this->isAgedBrie($i) && !$this->isBackstage($i)) {
-                $this->decreaseQualityWhenNotHasMinimumQuality($i);
-            } else {
-                if (!$this->hasMaximumQuality($i)) {
-                    $this->increaseQualityWhenNotHasMaximumQuality($i);
-
-                    if ($this->isBackstage($i)) {
-                        if ($this->isMinimumDays($i)) {
-                            $this->increaseQualityWhenNotHasMaximumQuality($i);
-                        }
-
-                        if ($this->isDoubleDays($i)) {
-                            $this->increaseQualityWhenNotHasMaximumQuality($i);
-                        }
-                    }
-                }
-            }
-
-            $this->decreaseSellin($i);
-
-            if ($this->isSellInHasPassed($i)) {
-                if (!$this->isAgedBrie($i)) {
-                    if (!$this->isBackstage($i)) {
-                        $this->decreaseQualityWhenNotHasMinimumQuality($i);
-                    } else {
-                        $this->setMinimumQuality($i);
-                    }
-                } else {
-                    $this->increaseQualityWhenNotHasMaximumQuality($i);
-                }
-            }
-        }
-    }
-
-    /**
-     * @param $i
-     * @return bool
-     */
-    protected function hasQuality($i): bool
-    {
-        return $this->items[$i]->quality > ItemInterface::MINIMUM_QUALITY;
-    }
-
-    /**
-     * @param $i
-     * @return bool
-     */
-    protected function hasMaximumQuality($i): bool
-    {
-        return $this->items[$i]->quality >= ItemInterface::MAXIMUM_QUALITY;
-    }
-
-    /**
-     * @param $i
-     * @return bool
-     */
-    protected function isAgedBrie($i): bool
-    {
-        return $this->items[$i]->name == ItemInterface::AGED_BRIE;
-    }
-
-    /**
-     * @param $i
-     * @return bool
-     */
-    protected function isBackstage($i): bool
-    {
-        return $this->items[$i]->name == ItemInterface::BACKSTAGE;
-    }
-
-    /**
-     * @param $i
-     * @return bool
-     */
-    protected function isSulfuras($i): bool
-    {
-        return $this->items[$i]->name == ItemInterface::SULFURAS;
-    }
-
-    /**
-     * @param $i
-     * @return int
-     */
-    protected function decreaseQuality($i): void
-    {
-        $this->items[$i]->quality = $this->items[$i]->quality - ItemInterface::QUALITY_STEP;
-    }
-
-    /**
-     * @param $i
-     * @return bool
-     */
-    protected function isMinimumDays($i): bool
-    {
-        return $this->items[$i]->sellIn < ItemInterface::BACKSTAGE_MINIMUM_DAYS;
-    }
-
-    /**
-     * @param $i
-     * @return bool
-     */
-    protected function isDoubleDays($i): bool
-    {
-        return $this->items[$i]->sellIn < ItemInterface::BACKSTAGE_DOUBLE_DAYS;
-    }
-
-    /**
-     * @param $i
-     */
-    protected function decreaseSellin($i): void
-    {
-        $this->items[$i]->sellIn = $this->items[$i]->sellIn - ItemInterface::SELLIN_STEP;
-    }
-
-    /**
-     * @param $i
-     */
-    protected function setMinimumQuality($i): void
-    {
-        $this->items[$i]->quality = ItemInterface::MINIMUM_QUALITY;
-    }
-
-    /**
-     * @param $i
-     * @return bool
-     */
-    protected function isSellInHasPassed($i): bool
-    {
-        return $this->items[$i]->sellIn < ItemInterface::MINIMUM_SELLIN;
-    }
-
-    /**
-     * @param $i
-     */
-    protected function increaseQualityWhenNotHasMaximumQuality($i): void
-    {
-        if (!$this->hasMaximumQuality($i)) {
-            $this->items[$i]->quality = $this->items[$i]->quality + ItemInterface::QUALITY_STEP;
-        }
-    }
-
-    /**
-     * @param $i
-     */
-    protected function decreaseQualityWhenNotHasMinimumQuality($i): void
-    {
-        if ($this->hasQuality($i)) {
-            $this->decreaseQuality($i);
+        foreach ($this->stock as $product) {
+            $product->updateProperties();
         }
     }
 }

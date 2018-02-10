@@ -6,9 +6,9 @@
  * Time: 19:57
  */
 
-namespace GildedRose\Objects;
+namespace GildedRose\Products;
 
-interface ItemInterface
+interface ProductInterface
 {
     const AGED_BRIE = "Aged Brie";
 
@@ -21,6 +21,8 @@ interface ItemInterface
     const ELIXIR = "Elixir of the Mongoose";
 
     const CAKE = "Conjured Mana Cake";
+
+    const CONJURED = "Conjured";
 
     const QUALITY_STEP = 1;
 
@@ -35,4 +37,14 @@ interface ItemInterface
     const MINIMUM_SELLIN = 0;
 
     const SELLIN_STEP = 1;
+
+    public function __construct(array $parts);
+
+    public function updateProperties();
+
+    public function name(): string;
+
+    public function quality(): int;
+
+    public function sellIn(): int;
 }
